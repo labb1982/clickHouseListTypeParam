@@ -77,17 +77,43 @@ public class ClickHouseDemo {
                 Map.of("tags2", convertToLiteral(List.of("Alice", "Bob", "Carol"))));
     }
 //"['java','docker', 'C++']"
-    private static String convertToLiteral(Collection<String> java) {
+    private static String convertToLiteral(Collection<? extends CharSequence> java) {
         if(java == null || java.isEmpty()){
             return "[]";
         }
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append('[');
-        for (String s : java) {
-            stringBuilder.append('\'').append(s).append('\'').append(',');
+        for (CharSequence s : java) {
+            stringBuilder.append('\'');
+            appendEscaped(stringBuilder, s);
+            stringBuilder.append('\'').append(',');
         }
         stringBuilder.setCharAt(stringBuilder.length() - 1, ']');
         return stringBuilder.toString();
+    }
+
+    private static void appendEscaped(StringBuilder sb, CharSequence s) {
+        boolean needEscape = false;
+        int length = s.length();
+        for (int i = 0; i < length; i++) {
+            char c = s.charAt(i);
+            if (c == '\\' || c == '\'') {
+                needEscape = true;
+                break;
+            }
+        }
+        if (!needEscape) {
+            sb.append(s);
+            return;
+        }
+        for (int i = 0; i < length; i++) {
+            char c = s.charAt(i);
+            switch (c) {
+                case '\\' -> sb.append("\\\\");
+                case '\'' -> sb.append("\\'");
+                default -> sb.append(c);
+            }
+        }
     }
 
     private void collectResult(String sqlQuery1, Map<String, Object> params) throws Exception {
