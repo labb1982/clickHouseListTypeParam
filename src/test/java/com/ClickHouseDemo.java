@@ -18,6 +18,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class ClickHouseDemo {
 
+    private static final DataTypeConverter DATA_TYPE_CONVERTER = new DataTypeConverter();
     private final Client client;
 
     public ClickHouseDemo(String host, Integer mappedPort, String dbName, String userName, String pwd) {
@@ -111,7 +112,7 @@ public class ClickHouseDemo {
                     int andIncrement = atomicInteger.getAndIncrement();
                     Object object = reader.readValue(andIncrement);
                     if(column.getDataType() == ClickHouseDataType.Array){
-                        object = new DataTypeConverter().convertToString(object, column);
+                        object = DATA_TYPE_CONVERTER.convertToString(object, column);
                     }
                     System.out.print(','+columnIndex+','+ andIncrement+":" + column + ":" + object);
                 });
