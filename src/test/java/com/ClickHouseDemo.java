@@ -74,7 +74,7 @@ public class ClickHouseDemo {
         collectResult(sqlQuery1, params);
 
         collectResult("select * from person where name in ({tags2:Array(String)})",
-                Map.of("tags2", convertToLiteral(List.of("Alice", "Bob", "Carol"))));
+                Map.of("tags2", convertToLiteral(List.of("Alice", "Bob", "Carol1"))));
     }
 //"['java','docker', 'C++']"
     private static String convertToLiteral(Collection<? extends CharSequence> java) {
