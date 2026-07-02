@@ -9,6 +9,7 @@ import com.clickhouse.client.api.query.QueryResponse;
 import com.clickhouse.data.ClickHouseColumn;
 import com.clickhouse.data.ClickHouseDataType;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -59,8 +60,8 @@ public class ClickHouseDemo {
     public void selectRows() throws Exception {
 
         Map<String, Object> params =
-                Map.of("tags1", //                        new String[]{"java", "docker"}
-                         "['java','docker', 'C++']"
+                Map.of("tags1",
+                        convertToLiteral(List.of("java", "docker", "C++"))
                 );
 
         String sqlQuery1 = """
@@ -71,8 +72,21 @@ public class ClickHouseDemo {
                 """;
         collectResult(sqlQuery1, params);
 
-        collectResult("select tags from person where name in ({tags2:Array(String)})",
-                Map.of("tags2", "['Alice','Bob', 'Lab']"));
+        collectResult("select * from person where name in ({tags2:Array(String)})",
+                Map.of("tags2", convertToLiteral(List.of("Alice", "Bob", "Carol"))));
+    }
+//"['java','docker', 'C++']"
+    private static String convertToLiteral(Collection<String> java) {
+        if(java == null || java.isEmpty()){
+            return "[]";
+        }
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append('[');
+        for (String s : java) {
+            stringBuilder.append('\'').append(s).append('\'').append(',');
+        }
+        stringBuilder.setCharAt(stringBuilder.length() - 1, ']');
+        return stringBuilder.toString();
     }
 
     private void collectResult(String sqlQuery1, Map<String, Object> params) throws Exception {
@@ -99,7 +113,7 @@ public class ClickHouseDemo {
                     if(column.getDataType() == ClickHouseDataType.Array){
                         object = new DataTypeConverter().convertToString(object, column);
                     }
-                    System.out.print(","+columnIndex+","+ andIncrement+":" + column + ":" + object);
+                    System.out.print(','+columnIndex+','+ andIncrement+":" + column + ":" + object);
                 });
 
                 // Array reading depends on the element type.
