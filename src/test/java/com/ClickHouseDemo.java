@@ -33,36 +33,39 @@ public class ClickHouseDemo {
     public void createTable() throws Exception {
 
         execute("""
-            DROP TABLE IF EXISTS person
-            """);
+                DROP TABLE IF EXISTS person
+                """);
 
         execute("""
-            CREATE TABLE person
-            (
-                id UInt32,
-                name String,
-                tags Array(String)
-            )
-            ENGINE = MergeTree
-            ORDER BY id
-            """);
+                CREATE TABLE person
+                (
+                    id UInt32,
+                    name String,
+                    tags Array(String)
+                )
+                ENGINE = MergeTree
+                ORDER BY id
+                """);
     }
 
     public void insertRows() throws Exception {
 
         execute("""
-            INSERT INTO person VALUES
-            (1,'Alice',['java','spring']),
-            (2,'Bob',['docker','kotlin']),
-            (3,'Carol',['java','clickhouse'])
-            """);
+                INSERT INTO person VALUES
+                (1,'Alice',['java','spring']),
+                (2,'Bob',['docker','kotlin']),
+                (3,'Carol',['java','clickhouse'])
+                """);
     }
 
     public void selectRows() throws Exception {
 
         Map<String, Object> params =
                 Map.of("tags1",
-                        convertToLiteral(List.of("java", "docker", "C++"))
+                        convertToLiteral(List.of("java", "docker", "C++",
+                                "O'Reilly",
+                                "C:\\temp",
+                                "Bob's"))
                 );
 
         String sqlQuery1 = """
@@ -74,11 +77,15 @@ public class ClickHouseDemo {
         collectResult(sqlQuery1, params);
 
         collectResult("select * from person where name in ({tags2:Array(String)})",
-                Map.of("tags2", convertToLiteral(List.of("Alice", "Bob", "Carol1"))));
+                Map.of("tags2", convertToLiteral(List.of("Alice", "Bob", "Carol",
+                        "O'Reilly",
+                        "C:\\temp",
+                        "Bob's"))));
     }
-//"['java','docker', 'C++']"
+
+    //"['java','docker', 'C++']"
     private static String convertToLiteral(Collection<? extends CharSequence> java) {
-        if(java == null || java.isEmpty()){
+        if (java == null || java.isEmpty()) {
             return "[]";
         }
         StringBuilder stringBuilder = new StringBuilder();
@@ -137,10 +144,10 @@ public class ClickHouseDemo {
                     int columnIndex = column.getColumnIndex();
                     int andIncrement = atomicInteger.getAndIncrement();
                     Object object = reader.readValue(andIncrement);
-                    if(column.getDataType() == ClickHouseDataType.Array){
+                    if (column.getDataType() == ClickHouseDataType.Array) {
                         object = DATA_TYPE_CONVERTER.convertToString(object, column);
                     }
-                    System.out.print(','+columnIndex+','+ andIncrement+":" + column + ":" + object);
+                    System.out.print(',' + columnIndex + ',' + andIncrement + ":" + column + ":" + object);
                 });
 
                 // Array reading depends on the element type.
@@ -156,7 +163,7 @@ public class ClickHouseDemo {
         try (CommandResponse ignored =
                      execute.get(30, TimeUnit.SECONDS)) {
             // nothing else required
-            System.out.println(ignored);
+            System.out.println(ignored.getClass().getName() + " : " + ignored);
         }
     }
 
